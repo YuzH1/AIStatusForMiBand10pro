@@ -1,0 +1,17 @@
+<script>
+import interconn from './utils/interconn'
+import api from './utils/api'
+import store from './utils/store'
+
+export default {
+  onCreate() {
+    globalThis.api = api
+    globalThis.store = store
+    interconn.init()
+    console.log('[ai-quota] app created')
+  },
+  onDestroy() {
+    console.log('[ai-quota] app destroyed')
+  }
+}
+</script>

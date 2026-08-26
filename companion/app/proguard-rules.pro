@@ -1,0 +1,3 @@
+-keep class com.xiaomi.xms.wearable.** { *; }
+-keep class com.xiaomi.xms.wearable.tasks.** { *; }
+-dontwarn com.xiaomi.xms.wearable.**

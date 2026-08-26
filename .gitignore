@@ -1,0 +1,20 @@
+# Android / Gradle
+companion/.gradle/
+companion/build/
+companion/app/build/
+companion/local.properties
+*.iml
+.idea/
+
+# Node / quickapp
+quickapp/node_modules/
+quickapp/dist/
+quickapp/build/
+
+# 构建临时目录
+.temp_quickapp/
+
+# misc
+*.log
+.DS_Store
+Thumbs.db
