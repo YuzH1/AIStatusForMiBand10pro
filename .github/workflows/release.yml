@@ -1,0 +1,82 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-rpk:
+    name: 构建手环 rpk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: quickapp/package-lock.json
+
+      - name: 安装依赖并打包
+        working-directory: quickapp
+        run: |
+          npm ci
+          npm run build
+
+      - name: 上传 rpk 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpk
+          path: quickapp/dist/*.rpk
+
+  build-apk:
+    name: 构建 Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: 构建 release APK
+        working-directory: companion
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: 上传 APK 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: companion/app/build/outputs/apk/release/*.apk
+
+  release:
+    name: 发布 Release
+    needs: [build-rpk, build-apk]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: rpk
+          path: dist/rpk
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: apk
+          path: dist/apk
+
+      - name: 生成 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/rpk/*.rpk
+            dist/apk/*.apk
+          generate_release_notes: true
