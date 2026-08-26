@@ -48,8 +48,8 @@ const LOW_PERCENT = 10
 export default {
   private: {
     accounts: [],
-    connClass: 'conn-bad',
-    connText: '未连接',
+    connClass: '',
+    connText: '连接中...',
     lastUpdate: '--',
     toast: '',
     timer: null,
@@ -62,9 +62,16 @@ export default {
     console.log('[ai-quota] onShow')
     this.initBridge()
     this.restoreCache()
-    this.requestData(true)
     this.startTimer()
     this.computeLayout()
+    if (interconn.getReadyState() === 1) {
+      this.connText = '已连接'
+      this.connClass = 'conn-ok'
+      this.requestData(false)
+    } else if (this.accounts.length === 0) {
+      this.connText = '连接中...'
+      this.connClass = ''
+    }
   },
   onHide() {
     console.log('[ai-quota] onHide')
@@ -104,9 +111,14 @@ export default {
 
     interconn.onState((state) => {
       this.connected = state === 1
-      this.connText = state === 1 ? '已连接' : '未连接'
-      this.connClass = state === 1 ? 'conn-ok' : 'conn-bad'
-      if (state === 1) this.requestData(false)
+      if (state === 1) {
+        this.connText = '已连接'
+        this.connClass = 'conn-ok'
+        this.requestData(false)
+      } else {
+        this.connText = this.accounts.length > 0 ? '连接断开' : '未连接'
+        this.connClass = 'conn-bad'
+      }
     })
 
     api.on('update.quota', (data) => {
@@ -123,7 +135,7 @@ export default {
   },
   restoreCache() {
     store.get('accounts', []).then((cached) => {
-      if (cached && cached.length) this.applyAccounts(cached)
+      if (cached && cached.length) this.applyAccounts(cached, true)
     })
     store.get('lastUpdate', null).then((t) => {
       if (t) this.lastUpdate = fmt.fmtTime(t)
@@ -142,14 +154,16 @@ export default {
       }
     }).catch((err) => {
       console.warn('[ai-quota] requestData failed', JSON.stringify(err))
-      this.dataHint = err && err.code === 1006 ? '未连接手机' : '请求失败: ' + ((err && err.code) || '')
       if (this.accounts.length === 0) {
-        this.connText = '未连接手机'
+        this.connText = '未连接'
         this.connClass = 'conn-bad'
+        this.dataHint = '未连接手机'
+      } else {
+        this.dataHint = '连接异常，显示缓存数据'
       }
     })
   },
-  applyAccounts(list) {
+  applyAccounts(list, fromCache) {
     const items = list.map((a) => {
       const pct = fmt.percent(a.remaining, a.total)
       let remainClass = ''
@@ -174,6 +188,7 @@ export default {
     })
     this.accounts = items
     this.dataHint = items.length === 0 ? '手机端账户列表为空' : ''
+    if (fromCache) return
     this.lastUpdate = fmt.fmtTime(Date.now())
     store.set('accounts', items)
     store.set('lastUpdate', Date.now())
