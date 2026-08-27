@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_accounts"
+        android:icon="@drawable/ic_nav_accounts"
+        android:title="账户" />
+    <item
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/ic_nav_settings"
+        android:title="设置" />
+    <item
+        android:id="@+id/nav_logs"
+        android:icon="@drawable/ic_nav_logs"
+        android:title="日志" />
+</menu>
