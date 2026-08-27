@@ -102,6 +102,12 @@
             android:layout_height="wrap_content"
             android:text="低额度提醒" />
 
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/swAutoStart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="开机自启桥接服务" />
+
         <Button
             android:id="@+id/btnTestNotify"
             android:layout_width="match_parent"

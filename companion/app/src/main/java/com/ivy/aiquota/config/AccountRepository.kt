@@ -90,10 +90,15 @@ class AccountRepository(context: Context) {
         get() = prefs.getBoolean(KEY_NOTIFY_LOW, true)
         set(value) = prefs.edit().putBoolean(KEY_NOTIFY_LOW, value).apply()
 
+    var autoStartOnBoot: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_START, true)
+        set(value) = prefs.edit().putBoolean(KEY_AUTO_START, value).apply()
+
     companion object {
         private const val KEY_ACCOUNTS = "accounts"
         private const val KEY_INTERVAL = "poll_interval_min"
         private const val KEY_NOTIFY_CHANGE = "notify_on_change"
         private const val KEY_NOTIFY_LOW = "notify_low"
+        private const val KEY_AUTO_START = "auto_start_on_boot"
     }
 }

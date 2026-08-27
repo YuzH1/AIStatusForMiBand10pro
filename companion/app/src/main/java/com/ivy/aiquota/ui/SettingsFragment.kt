@@ -70,6 +70,13 @@ class SettingsFragment : Fragment() {
                 AppLog.log("UI", "低额度提醒已${if (checked) "开启" else "关闭"}")
             }
         }
+        root.findViewById<SwitchMaterial>(R.id.swAutoStart).apply {
+            isChecked = repo.autoStartOnBoot
+            setOnCheckedChangeListener { _, checked ->
+                repo.autoStartOnBoot = checked
+                AppLog.log("UI", "开机自启已${if (checked) "开启" else "关闭"}")
+            }
+        }
         root.findViewById<Button>(R.id.btnTestNotify).setOnClickListener {
             ContextCompat.startForegroundService(
                 requireContext(),
