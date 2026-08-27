@@ -40,12 +40,26 @@ class QuotaManager(
     /** 首轮失败的账户延迟多久重试一次（毫秒） */
     private val retryDelayMs = 10_000L
 
+    /** 连续失败多少次后自动停用该账户 */
+    private val maxFailures = 3
+
+    /** 停用账户每多少轮探测一次是否恢复 */
+    private val probeCycles = 12
+
     @Volatile
     private var last: List<QuotaAccount> = emptyList()
 
     private val notifiedLow = HashSet<String>()
 
     private val notifiedExpiry = HashMap<String, String>()
+
+    private val consecutiveFailures = HashMap<String, Int>()
+
+    private val disabledIds = HashSet<String>()
+
+    private val probeCounters = HashMap<String, Int>()
+
+    private var lastConfigModTs = 0L
 
     private var lastSnapshot: String? = null
 
@@ -89,42 +103,85 @@ class QuotaManager(
             pushUpdate()
             return true
         }
-        var allOk = true
+
+        val cfgTs = repo.configModifiedAt
+        if (cfgTs != lastConfigModTs) {
+            lastConfigModTs = cfgTs
+            if (disabledIds.isNotEmpty() || consecutiveFailures.isNotEmpty()) {
+                AppLog.log(tag, "配置已变更，重置停用/失败计数")
+                disabledIds.clear()
+                consecutiveFailures.clear()
+                probeCounters.clear()
+            }
+        }
+
         val results = cfgs.map { cfg ->
-            val provider = QuotaProvider.create(cfg.type)
-            val acc = provider.fetch(cfg)
+            val acc = fetchAccount(cfg)
+            if (acc.status == "ok") {
+                consecutiveFailures.remove(cfg.id)
+                if (disabledIds.remove(cfg.id)) {
+                    AppLog.log(tag, "${cfg.name} 已恢复启用")
+                }
+            }
             AppLog.log(
                 tag,
                 "${cfg.name}(${cfg.type}) -> status=${acc.status} remaining=${acc.remaining}${acc.unit} err=${acc.error ?: "-"}"
             )
-            if (acc.status != "ok") allOk = false
             acc
         }.toMutableList()
 
-        val failed = results.filter { it.status != "ok" }
-        if (failed.isNotEmpty()) {
-            AppLog.log(tag, "${failed.size} 个账户首轮失败，${retryDelayMs / 1000}s 后重试一次")
-            delay(retryDelayMs)
-            failed.forEach { f ->
-                val cfg = cfgs.find { it.id == f.id } ?: return@forEach
-                val acc = QuotaProvider.create(cfg.type).fetch(cfg)
-                AppLog.log(
-                    tag,
-                    "重试 ${cfg.name}(${cfg.type}) -> status=${acc.status} err=${acc.error ?: "-"}"
-                )
-                val idx = results.indexOfFirst { it.id == f.id }
-                if (idx >= 0) results[idx] = acc
-            }
-        }
-        allOk = results.all { it.status == "ok" }
-
         last = results
+        val allOk = results.filter { it.status != "disabled" }.all { it.status == "ok" }
         checkThresholds(cfgs, results)
         checkExpiry(cfgs, results)
         pushUpdate()
         notifyOnChange(results)
         AppLog.log(tag, "刷新完成: ${results.size} 个账户, allOk=$allOk")
         return allOk
+    }
+
+    private suspend fun fetchAccount(cfg: AccountConfig): QuotaAccount {
+        val now = System.currentTimeMillis()
+        if (disabledIds.contains(cfg.id)) {
+            val cycles = probeCounters[cfg.id] ?: 0
+            if (cycles < probeCycles) {
+                probeCounters[cfg.id] = cycles + 1
+                return QuotaAccount(
+                    id = cfg.id,
+                    name = cfg.name,
+                    type = cfg.type,
+                    remaining = 0.0,
+                    total = null,
+                    unit = "",
+                    expiredAt = null,
+                    group = "",
+                    status = "disabled",
+                    error = "连续失败已停用",
+                    updatedAt = now
+                )
+            }
+            probeCounters.remove(cfg.id)
+            AppLog.log(tag, "探测停用账户 ${cfg.name} ...")
+        }
+
+        val provider = QuotaProvider.create(cfg.type)
+        var acc = provider.fetch(cfg)
+        if (acc.status != "ok") {
+            AppLog.log(tag, "${cfg.name}(${cfg.type}) 首轮失败，${retryDelayMs / 1000}s 后重试一次")
+            delay(retryDelayMs)
+            acc = provider.fetch(cfg)
+            AppLog.log(tag, "重试 ${cfg.name}(${cfg.type}) -> status=${acc.status} err=${acc.error ?: "-"}")
+        }
+        if (acc.status != "ok") {
+            val n = (consecutiveFailures[cfg.id] ?: 0) + 1
+            consecutiveFailures[cfg.id] = n
+            if (n >= maxFailures) {
+                disabledIds.add(cfg.id)
+                probeCounters[cfg.id] = 0
+                AppLog.log(tag, "${cfg.name} 连续失败 $n 次，已自动停用（每 ${probeCycles} 轮探测一次）")
+            }
+        }
+        return acc
     }
 
     private fun notifyOnChange(results: List<QuotaAccount>) {
@@ -188,5 +245,8 @@ class QuotaManager(
         stop()
         notifiedLow.clear()
         notifiedExpiry.clear()
+        consecutiveFailures.clear()
+        disabledIds.clear()
+        probeCounters.clear()
     }
 }

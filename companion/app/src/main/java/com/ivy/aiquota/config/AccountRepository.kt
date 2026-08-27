@@ -64,7 +64,10 @@ class AccountRepository(context: Context) {
     fun saveAccounts(list: List<AccountConfig>) {
         val arr = JSONArray()
         list.forEach { arr.put(it.toJson()) }
-        prefs.edit().putString(KEY_ACCOUNTS, arr.toString()).apply()
+        prefs.edit()
+            .putString(KEY_ACCOUNTS, arr.toString())
+            .putLong(KEY_CONFIG_MODIFIED_AT, System.currentTimeMillis())
+            .apply()
     }
 
     fun upsertAccount(cfg: AccountConfig) {
@@ -94,11 +97,16 @@ class AccountRepository(context: Context) {
         get() = prefs.getBoolean(KEY_AUTO_START, true)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_START, value).apply()
 
+    var configModifiedAt: Long
+        get() = prefs.getLong(KEY_CONFIG_MODIFIED_AT, 0L)
+        set(value) = prefs.edit().putLong(KEY_CONFIG_MODIFIED_AT, value).apply()
+
     companion object {
         private const val KEY_ACCOUNTS = "accounts"
         private const val KEY_INTERVAL = "poll_interval_min"
         private const val KEY_NOTIFY_CHANGE = "notify_on_change"
         private const val KEY_NOTIFY_LOW = "notify_low"
         private const val KEY_AUTO_START = "auto_start_on_boot"
+        private const val KEY_CONFIG_MODIFIED_AT = "config_modified_at"
     }
 }
