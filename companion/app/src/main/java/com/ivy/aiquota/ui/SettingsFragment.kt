@@ -56,6 +56,15 @@ class SettingsFragment : Fragment() {
             repo.pollIntervalMin = v
             AppLog.log("UI", "轮询间隔已设为 ${v} 分钟")
         }
+        root.findViewById<Button>(R.id.btnSaveCooldown).setOnClickListener {
+            val v = root.findViewById<EditText>(R.id.edtCooldown).text.toString().toIntOrNull()
+            if (v == null || v < 1) {
+                Toast.makeText(requireContext(), "请输入有效冷却时间（1-1440 分钟）", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            repo.notifyCooldownMin = v
+            AppLog.log("UI", "变化通知冷却已设为 ${v} 分钟")
+        }
         root.findViewById<SwitchMaterial>(R.id.swNotifyChange).apply {
             isChecked = repo.notifyOnChange
             setOnCheckedChangeListener { _, checked ->
@@ -87,6 +96,7 @@ class SettingsFragment : Fragment() {
         }
 
         edtInterval.setText(repo.pollIntervalMin.toString())
+        root.findViewById<EditText>(R.id.edtCooldown).setText(repo.notifyCooldownMin.toString())
         updateServiceStatus()
         return root
     }

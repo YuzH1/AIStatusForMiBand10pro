@@ -101,6 +101,10 @@ class AccountRepository(context: Context) {
         get() = prefs.getLong(KEY_CONFIG_MODIFIED_AT, 0L)
         set(value) = prefs.edit().putLong(KEY_CONFIG_MODIFIED_AT, value).apply()
 
+    var notifyCooldownMin: Int
+        get() = prefs.getInt(KEY_NOTIFY_COOLDOWN, 30).coerceIn(1, 1440)
+        set(value) = prefs.edit().putInt(KEY_NOTIFY_COOLDOWN, value.coerceIn(1, 1440)).apply()
+
     companion object {
         private const val KEY_ACCOUNTS = "accounts"
         private const val KEY_INTERVAL = "poll_interval_min"
@@ -108,5 +112,6 @@ class AccountRepository(context: Context) {
         private const val KEY_NOTIFY_LOW = "notify_low"
         private const val KEY_AUTO_START = "auto_start_on_boot"
         private const val KEY_CONFIG_MODIFIED_AT = "config_modified_at"
+        private const val KEY_NOTIFY_COOLDOWN = "notify_cooldown_min"
     }
 }

@@ -63,6 +63,8 @@ class QuotaManager(
 
     private var lastSnapshot: String? = null
 
+    private var lastChangeNotifyTs = 0L
+
     fun start() {
         scope.launch {
             while (isActive) {
@@ -188,6 +190,13 @@ class QuotaManager(
         if (results.isEmpty()) return
         val snapshot = results.joinToString("|") { "${it.id}:${it.remaining}:${it.status}" }
         if (snapshot == lastSnapshot) return
+        val now = System.currentTimeMillis()
+        val cooldownMs = repo.notifyCooldownMin * 60_000L
+        if (now - lastChangeNotifyTs < cooldownMs) {
+            AppLog.log(tag, "额度有变化，但处于通知冷却期，暂不推送")
+            return
+        }
+        lastChangeNotifyTs = now
         lastSnapshot = snapshot
         AppLog.log(tag, "额度有变化，触发通知回调")
         onRefreshed(results)

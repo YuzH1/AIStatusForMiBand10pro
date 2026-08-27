@@ -275,9 +275,16 @@ class WearBridgeService : Service() {
             return
         }
         val summary = results.joinToString(" · ") {
-            "${it.name} ${"%.2f".format(it.remaining)}${it.unit}"
+            "${it.name} ${"%.2f".format(it.remaining)}${it.unit}${pctSuffix(it)}"
         }
         sendBandNotify("AI额度", summary)
+    }
+
+    private fun pctSuffix(acc: QuotaAccount): String {
+        val total = acc.total ?: return ""
+        if (total <= 0 || acc.remaining < 0) return ""
+        val pct = ((acc.remaining / total) * 100).toInt().coerceIn(0, 100)
+        return "（$pct%）"
     }
 
     private fun sendBandNotify(title: String, message: String) {
@@ -309,7 +316,7 @@ class WearBridgeService : Service() {
             return
         }
         val title = "额度不足: ${acc.name}"
-        val msg = "剩余 ${"%.2f".format(acc.remaining)}${acc.unit}"
+        val msg = "剩余 ${"%.2f".format(acc.remaining)}${acc.unit}${pctSuffix(acc)}"
         sendBandNotify(title, msg)
     }
 
@@ -324,7 +331,7 @@ class WearBridgeService : Service() {
         } else {
             "${hoursLeft.toInt()} 小时后$word"
         }
-        sendBandNotify("额度提醒: ${acc.name}", "剩余 ${"%.2f".format(acc.remaining)}${acc.unit} · $remain")
+        sendBandNotify("额度提醒: ${acc.name}", "剩余 ${"%.2f".format(acc.remaining)}${acc.unit}${pctSuffix(acc)} · $remain")
     }
 
     override fun onDestroy() {
