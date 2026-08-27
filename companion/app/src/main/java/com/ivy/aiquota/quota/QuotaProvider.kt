@@ -10,6 +10,7 @@ interface QuotaProvider {
             "openai" -> OpenAIProvider()
             "deepseek" -> DeepSeekProvider()
             "codex" -> CodexProvider()
+            "opencodego" -> OpenCodeGoProvider()
             "sub2api" -> Sub2ApiProvider()
             "manual" -> ManualProvider()
             else -> OneApiProvider()
@@ -20,6 +21,7 @@ interface QuotaProvider {
             "openai" -> "OpenAI"
             "deepseek" -> "DeepSeek"
             "codex" -> "Codex"
+            "opencodego" -> "OpenCode Go"
             "sub2api" -> "Sub2API"
             "manual" -> "手动"
             else -> type

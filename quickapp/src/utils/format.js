@@ -3,6 +3,7 @@ const PROVIDER_LABEL = {
   openai: 'OpenAI',
   deepseek: 'DeepSeek',
   codex: 'Codex',
+  opencodego: 'OpenCode',
   sub2api: 'Sub2API',
   manual: '手动'
 }

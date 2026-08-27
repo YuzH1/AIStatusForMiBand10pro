@@ -256,9 +256,9 @@ class MainActivity : AppCompatActivity() {
             adapter = ArrayAdapter(
                 this@MainActivity,
                 android.R.layout.simple_spinner_item,
-                listOf("oneapi", "openai", "deepseek", "codex", "sub2api", "manual")
+                listOf("oneapi", "openai", "deepseek", "codex", "opencodego", "sub2api", "manual")
             ).apply { setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item) }
-            setSelection(listOf("oneapi", "openai", "deepseek", "codex", "sub2api", "manual").indexOf(edit?.type ?: "oneapi").coerceAtLeast(0))
+            setSelection(listOf("oneapi", "openai", "deepseek", "codex", "opencodego", "sub2api", "manual").indexOf(edit?.type ?: "oneapi").coerceAtLeast(0))
         }
         val edtBase = EditText(this).apply {
             hint = "BaseUrl：中转站填根地址（如 https://xxx.com，不要带 /v1）；OpenAI/DeepSeek/Codex 可留空"

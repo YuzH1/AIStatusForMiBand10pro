@@ -60,6 +60,7 @@
 | `openai` | `/v1/dashboard/billing/subscription` + `/usage` | 订阅制：限额-已用；无订阅自动走 `credit_grants`（prepaid 总额度） |
 | `deepseek` | `GET {base}/user/balance` | 官方余额 |
 | `codex` | `GET https://chatgpt.com/backend-api/wham/usage` | Codex/ChatGPT 订阅，5 小时+7 天窗口已用百分比、充值余额；access_token 取自 `~/.codex/auth.json` |
+| `opencodego` | `GET https://opencode.ai/zen/go/v1/usage` | OpenCode Go 订阅（$10/月），5 小时/周/月三窗口已用百分比 |
 | `sub2api` | `GET {base}/v1/usage` | Sub2API 中转网关，兼容订阅/总额度/速率限制/余额四种模式 |
 | `manual` | 无 | 手动填写剩余/总额/单位（ChatGPT Plus 等无查询接口的账户） |
 
