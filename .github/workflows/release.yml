@@ -28,6 +28,11 @@ jobs:
           npm ci
           npm run build
 
+      - name: 重命名 rpk（跟随发布版本号）
+        working-directory: quickapp/dist
+        run: |
+          mv *.rpk "com.ivy.aiquota-${GITHUB_REF_NAME}.rpk"
+
       - name: 上传 rpk 产物
         uses: actions/upload-artifact@v4
         with:
@@ -50,6 +55,11 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
+
+      - name: 重命名 APK（跟随发布版本号）
+        working-directory: companion/app/build/outputs/apk/release
+        run: |
+          mv app-release.apk "com.ivy.aiquota-${GITHUB_REF_NAME}.apk"
 
       - name: 上传 APK 产物
         uses: actions/upload-artifact@v4
