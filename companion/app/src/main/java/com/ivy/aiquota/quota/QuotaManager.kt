@@ -37,6 +37,9 @@ class QuotaManager(
     /** 到期/重置提醒阈值（小时），进入该窗口内每天提醒一次 */
     private val expiryRemindHours = 72.0
 
+    /** 首轮失败的账户延迟多久重试一次（毫秒） */
+    private val retryDelayMs = 10_000L
+
     @Volatile
     private var last: List<QuotaAccount> = emptyList()
 
@@ -96,7 +99,25 @@ class QuotaManager(
             )
             if (acc.status != "ok") allOk = false
             acc
+        }.toMutableList()
+
+        val failed = results.filter { it.status != "ok" }
+        if (failed.isNotEmpty()) {
+            AppLog.log(tag, "${failed.size} 个账户首轮失败，${retryDelayMs / 1000}s 后重试一次")
+            delay(retryDelayMs)
+            failed.forEach { f ->
+                val cfg = cfgs.find { it.id == f.id } ?: return@forEach
+                val acc = QuotaProvider.create(cfg.type).fetch(cfg)
+                AppLog.log(
+                    tag,
+                    "重试 ${cfg.name}(${cfg.type}) -> status=${acc.status} err=${acc.error ?: "-"}"
+                )
+                val idx = results.indexOfFirst { it.id == f.id }
+                if (idx >= 0) results[idx] = acc
+            }
         }
+        allOk = results.all { it.status == "ok" }
+
         last = results
         checkThresholds(cfgs, results)
         checkExpiry(cfgs, results)
