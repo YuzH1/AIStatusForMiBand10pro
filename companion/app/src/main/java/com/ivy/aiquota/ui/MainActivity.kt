@@ -6,7 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.google.android.material.navigation.NavigationBarView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.ivy.aiquota.R
 
 class MainActivity : AppCompatActivity() {
@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         }
 
-        val navBar = findViewById<NavigationBarView>(R.id.navBar)
+        val navBar = findViewById<BottomNavigationView>(R.id.navBar)
         navBar.setOnItemSelectedListener { item ->
             val fragment: Fragment? = when (item.itemId) {
                 R.id.nav_accounts -> AccountsFragment()
