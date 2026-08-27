@@ -8,7 +8,7 @@
     <text class="update">更新于 {{lastUpdate}}</text>
 
     <list class="list" id="quotaList" style="height: {{listH}}px">
-      <list-item type="item" for="{{accounts}}" class="item-card">
+      <list-item type="item" for="{{accounts}}" class="item-card {{$item.expanded ? 'item-card-open' : ''}}" @click="toggleExpand($item.id)">
         <div class="card-head">
           <text class="acc-name">{{$item.name}}</text>
           <text class="acc-type">{{$item.typeText}}</text>
@@ -22,6 +22,10 @@
         </div>
         <text class="acc-detail">{{$item.detailText}}</text>
         <text class="acc-error" if="{{$item.error}}">{{$item.error}}</text>
+        <div class="acc-more" if="{{$item.expanded}}">
+          <text class="acc-more-line" if="{{$item.groupText}}">{{$item.groupText}}</text>
+          <text class="acc-more-line">更新于 {{$item.updatedText}}</text>
+        </div>
       </list-item>
     </list>
 
@@ -180,7 +184,9 @@ export default {
         remainClass = 'acc-remain-low'
         barClass = 'bar-fill-low'
       }
+      const order = a.status === 'error' ? 0 : (a.status === 'disabled' ? 1 : (pct !== null && pct <= LOW_PERCENT ? 2 : 3))
       return {
+        id: a.id,
         name: a.name || '未命名',
         typeText: fmt.providerLabel(a.type),
         remainingText: fmt.remainingText(a),
@@ -190,15 +196,29 @@ export default {
         hasBar: pct !== null,
         remainClass: remainClass,
         barClass: barClass,
-        error: a.status === 'error' ? (a.error || '查询失败') : (a.status === 'disabled' ? '已停用（连续失败，编辑账户后恢复）' : '')
+        error: a.status === 'error' ? (a.error || '查询失败') : (a.status === 'disabled' ? '已停用（连续失败，编辑账户后恢复）' : ''),
+        expanded: false,
+        groupText: a.group || '',
+        updatedText: fmt.fmtTime(a.updatedAt),
+        order: order
       }
     })
+    items.sort((x, y) => x.order - y.order)
+    items.forEach((it) => { delete it.order })
     this.accounts = items
     this.dataHint = items.length === 0 ? '手机端账户列表为空' : ''
     if (fromCache) return
     this.lastUpdate = fmt.fmtTime(Date.now())
-    store.set('accounts', items)
+    store.set('accounts', list)
     store.set('lastUpdate', Date.now())
+  },
+  toggleExpand(id) {
+    this.accounts = this.accounts.map((it) => {
+      const copy = {}
+      for (const k in it) copy[k] = it[k]
+      copy.expanded = it.id === id ? !it.expanded : false
+      return copy
+    })
   },
   handleRefresh() {
     this.toast = '刷新中...'
@@ -308,6 +328,20 @@ export default {
   border-radius: 14px;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.item-card-open {
+  height: 148px;
+}
+
+.acc-more {
+  margin-top: 4px;
+  flex-direction: column;
+}
+
+.acc-more-line {
+  font-size: 10px;
+  color: #6b7280;
 }
 
 .card-head {
