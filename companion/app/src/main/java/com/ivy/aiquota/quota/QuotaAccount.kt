@@ -13,7 +13,9 @@ data class QuotaAccount(
     val group: String,
     val status: String,
     val error: String?,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val used: Double? = null,
+    val detail: String = ""
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("id", id)
@@ -27,5 +29,7 @@ data class QuotaAccount(
         put("status", status)
         if (error != null) put("error", error)
         put("updatedAt", updatedAt)
+        if (used != null) put("used", used)
+        if (detail.isNotEmpty()) put("detail", detail)
     }
 }

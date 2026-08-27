@@ -64,7 +64,7 @@ class OneApiProvider : QuotaProvider {
                     remaining = balance
                 }
                 val unit = data.optString("currency", "USD").ifEmpty { "USD" }
-                val group = data.optString("default_model", "")
+                val model = data.optString("default_model", "")
 
                 QuotaAccount(
                     id = cfg.id,
@@ -74,10 +74,12 @@ class OneApiProvider : QuotaProvider {
                     total = null,
                     unit = unit,
                     expiredAt = null,
-                    group = group,
+                    group = "",
                     status = "ok",
                     error = null,
-                    updatedAt = now
+                    updatedAt = now,
+                    used = null,
+                    detail = model
                 )
             } catch (e: Exception) {
                 val msg = when {

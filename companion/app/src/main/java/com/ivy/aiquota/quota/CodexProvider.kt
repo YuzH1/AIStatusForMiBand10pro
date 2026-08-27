@@ -45,10 +45,10 @@ class CodexProvider : QuotaProvider {
                 val hasCredits = credits?.optBoolean("has_credits", false) ?: false
                 val balance = if (credits != null) credits.optDouble("balance", 0.0) else 0.0
 
-                val group = buildString {
-                    append("5小时已用 ${usedPct}% · 7天已用 ${secPct}%")
+                val group = if (plan.isNotEmpty()) plan else ""
+                val detail = buildString {
+                    append("5小时已用 $usedPct% · 7天已用 $secPct%")
                     if (hasCredits) append(" · 余额 $balance")
-                    if (plan.isNotEmpty()) append(" · ${plan}")
                 }
 
                 QuotaAccount(
@@ -62,7 +62,9 @@ class CodexProvider : QuotaProvider {
                     group = group,
                     status = "ok",
                     error = null,
-                    updatedAt = now
+                    updatedAt = now,
+                    used = usedPct.toDouble(),
+                    detail = detail
                 )
             } catch (e: Exception) {
                 AppLog.log(tag, "查询失败: ${e.message}")

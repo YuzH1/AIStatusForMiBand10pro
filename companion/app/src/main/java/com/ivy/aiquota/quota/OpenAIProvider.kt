@@ -91,7 +91,8 @@ class OpenAIProvider : QuotaProvider {
                     group = sub.optString("plan", ""),
                     status = "ok",
                     error = null,
-                    updatedAt = now
+                    updatedAt = now,
+                    used = if (totalLimit > 0) totalUsage else null
                 )
             } catch (e: Exception) {
                 QuotaAccount(

@@ -13,11 +13,14 @@
           <text class="acc-name">{{$item.name}}</text>
           <text class="acc-type">{{$item.typeText}}</text>
         </div>
-        <text class="acc-remain {{$item.remainClass}}">{{$item.remainingText}}</text>
-        <div class="bar">
+        <div class="row-main">
+          <text class="acc-remain {{$item.remainClass}}">{{$item.remainingText}}</text>
+          <text class="acc-used">{{$item.usedText}}</text>
+        </div>
+        <div class="bar" if="{{$item.hasBar}}">
           <div class="bar-fill {{$item.barClass}}" style="width: {{$item.barWidth}}%"></div>
         </div>
-        <text class="acc-meta">{{$item.metaText}}</text>
+        <text class="acc-detail">{{$item.detailText}}</text>
         <text class="acc-error" if="{{$item.error}}">{{$item.error}}</text>
       </list-item>
     </list>
@@ -179,10 +182,12 @@ export default {
         name: a.name || '未命名',
         typeText: fmt.providerLabel(a.type),
         remainingText: fmt.remainingText(a),
+        usedText: fmt.usedText(a),
+        detailText: fmt.detailText(a),
         barWidth: pct === null ? 0 : Math.round(pct),
+        hasBar: pct !== null,
         remainClass: remainClass,
         barClass: barClass,
-        metaText: fmt.metaText(a),
         error: a.status === 'error' ? (a.error || '查询失败') : ''
       }
     })
@@ -245,7 +250,7 @@ export default {
 <style>
 .page {
   width: 212px;
-  padding: 10px 8px;
+  padding: 8px;
   flex-direction: column;
 }
 
@@ -253,15 +258,16 @@ export default {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  height: 26px;
 }
 
 .back-btn {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
 }
 
 .title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
   color: #ffffff;
 }
@@ -281,20 +287,20 @@ export default {
 
 .update {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: 10px;
   color: #5c6068;
 }
 
 .list {
   width: 212px;
-  margin-top: 8px;
+  margin-top: 6px;
   margin-bottom: 48px;
 }
 
 .item-card {
   width: 196px;
-  height: 92px;
-  padding: 8px 10px;
+  height: 104px;
+  padding: 9px 11px;
   margin-bottom: 8px;
   background-color: #16191f;
   border-radius: 14px;
@@ -309,19 +315,27 @@ export default {
 }
 
 .acc-name {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: bold;
   color: #ffffff;
 }
 
 .acc-type {
   font-size: 10px;
-  color: #8a8f98;
+  color: #9aa3af;
+  padding: 2px 8px;
+  border-radius: 9px;
+  background-color: #1d2633;
+}
+
+.row-main {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .acc-remain {
-  margin-top: 6px;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: bold;
   color: #ffffff;
 }
@@ -334,16 +348,20 @@ export default {
   color: #ff6b4a;
 }
 
+.acc-used {
+  font-size: 11px;
+  color: #8a8f98;
+}
+
 .bar {
-  margin-top: 6px;
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
   background-color: #262b33;
   flex-direction: row;
 }
 
 .bar-fill {
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
   background-color: #2ea0ff;
 }
@@ -356,15 +374,13 @@ export default {
   background-color: #ff6b4a;
 }
 
-.acc-meta {
-  margin-top: 4px;
-  font-size: 11px;
-  color: #8a8f98;
+.acc-detail {
+  font-size: 10px;
+  color: #6b7280;
 }
 
 .acc-error {
-  margin-top: 4px;
-  font-size: 11px;
+  font-size: 10px;
   color: #ff6b4a;
 }
 

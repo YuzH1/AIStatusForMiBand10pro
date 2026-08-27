@@ -54,6 +54,7 @@ class Sub2ApiProvider : QuotaProvider {
                 val plan = r.optString("planName", "")
                 val unit = r.optString("unit", "USD").ifEmpty { "USD" }
                 var remaining = r.optDouble("remaining", -1.0)
+                var used: Double? = null
                 var total: Double? = null
                 val extra = StringBuilder()
 
@@ -78,19 +79,21 @@ class Sub2ApiProvider : QuotaProvider {
                     val used = if (mU > 0) mU else if (wU > 0) wU else if (dU > 0) dU else 0.0
                     if (limit > 0) total = limit
                     if (remaining < 0) remaining = (limit - used).coerceAtLeast(0.0)
+                    this.used = used
                 }
 
                 val quota = r.optJSONObject("quota")
                 if (quota != null && total == null) {
                     val limit = quota.optDouble("limit", 0.0)
-                    val used = quota.optDouble("used", 0.0)
+                    val usedV = quota.optDouble("used", 0.0)
                     val rem = quota.optDouble("remaining", -1.0)
                     if (limit > 0) {
                         total = limit
-                        val p = "${((used / limit) * 100).toInt().coerceIn(0, 100)}%"
+                        val p = "${((usedV / limit) * 100).toInt().coerceIn(0, 100)}%"
                         extra.append(if (extra.isEmpty()) p else " · $p")
                     }
-                    remaining = if (rem >= 0) rem else (limit - used).coerceAtLeast(0.0)
+                    remaining = if (rem >= 0) rem else (limit - usedV).coerceAtLeast(0.0)
+                    this.used = usedV
                 }
 
                 val rls = r.optJSONArray("rate_limits")
@@ -131,16 +134,12 @@ class Sub2ApiProvider : QuotaProvider {
                     total = total,
                     unit = unit,
                     expiredAt = null,
-                    group = buildString {
-                        if (plan.isNotEmpty()) append(plan)
-                        if (extra.isNotEmpty()) {
-                            if (isNotEmpty()) append(" · ")
-                            append(extra)
-                        }
-                    },
+                    group = plan,
                     status = "ok",
                     error = null,
-                    updatedAt = now
+                    updatedAt = now,
+                    used = used,
+                    detail = extra.toString()
                 )
             } catch (e: Exception) {
                 AppLog.log(tag, "查询失败: ${e.message}")

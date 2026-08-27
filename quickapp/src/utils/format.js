@@ -34,6 +34,16 @@ export default {
     const unit = acc.unit || ''
     return `${fmtNum(acc.remaining)}${unit}`
   },
+  usedText(acc) {
+    if (acc.used === null || acc.used === undefined) return ''
+    const unit = acc.unit || ''
+    return `已用 ${fmtNum(acc.used)}${unit}`
+  },
+  detailText(acc) {
+    if (acc.detail) return acc.detail
+    if (acc.group) return acc.group
+    return ''
+  },
   metaText(acc) {
     const parts = []
     if (acc.total) parts.push(`总额 ${fmtNum(acc.total)}${acc.unit || ''}`)
