@@ -122,7 +122,8 @@ class WearBridgeService : Service() {
             repo,
             channel,
             { cfg, acc -> sendLowQuotaNotify(cfg, acc) },
-            { results -> onQuotaRefreshed(results) }
+            { results -> onQuotaRefreshed(results) },
+            { cfg, acc, hours -> sendExpiryNotify(cfg, acc, hours) }
         )
         manager = mgr
         router = BridgeRouter(channel, mgr) { repo.pollIntervalMin }
@@ -310,6 +311,20 @@ class WearBridgeService : Service() {
         val title = "额度不足: ${acc.name}"
         val msg = "剩余 ${"%.2f".format(acc.remaining)}${acc.unit}"
         sendBandNotify(title, msg)
+    }
+
+    private fun sendExpiryNotify(cfg: AccountConfig, acc: QuotaAccount, hoursLeft: Double) {
+        if (!repo.notifyLow) {
+            AppLog.log(TAG, "到期提醒已关闭（跟随低额度开关），跳过 ${acc.name}")
+            return
+        }
+        val word = if (acc.type == "codex") "重置" else "到期"
+        val remain = if (hoursLeft >= 24) {
+            "${(hoursLeft / 24).toInt()} 天后$word"
+        } else {
+            "${hoursLeft.toInt()} 小时后$word"
+        }
+        sendBandNotify("额度提醒: ${acc.name}", "剩余 ${"%.2f".format(acc.remaining)}${acc.unit} · $remain")
     }
 
     override fun onDestroy() {

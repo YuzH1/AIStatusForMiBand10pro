@@ -183,7 +183,7 @@ export default {
         typeText: fmt.providerLabel(a.type),
         remainingText: fmt.remainingText(a),
         usedText: fmt.usedText(a),
-        detailText: fmt.detailText(a),
+        detailText: [fmt.detailText(a), fmt.expiryText(a.expiredAt, a.type)].filter(Boolean).join(' · '),
         barWidth: pct === null ? 0 : Math.round(pct),
         hasBar: pct !== null,
         remainClass: remainClass,

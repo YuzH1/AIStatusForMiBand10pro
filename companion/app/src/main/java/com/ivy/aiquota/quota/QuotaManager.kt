@@ -15,25 +15,34 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * 额度轮询管理器：按配置间隔拉取所有账户额度，
- * 结果推送 update.quota 事件给手表端，并在额度低于阈值时触发提醒。
+ * 结果推送 update.quota 事件给手表端，并在额度低于阈值/临近到期时触发提醒。
  */
 class QuotaManager(
     private val repo: AccountRepository,
     private val channel: WearChannel,
     private val onThreshold: (AccountConfig, QuotaAccount) -> Unit,
-    private val onRefreshed: (List<QuotaAccount>) -> Unit
+    private val onRefreshed: (List<QuotaAccount>) -> Unit,
+    private val onExpiry: (AccountConfig, QuotaAccount, Double) -> Unit
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val tag = "AIQuota/Manager"
 
+    /** 到期/重置提醒阈值（小时），进入该窗口内每天提醒一次 */
+    private val expiryRemindHours = 72.0
+
     @Volatile
     private var last: List<QuotaAccount> = emptyList()
 
     private val notifiedLow = HashSet<String>()
+
+    private val notifiedExpiry = HashMap<String, String>()
 
     private var lastSnapshot: String? = null
 
@@ -90,6 +99,7 @@ class QuotaManager(
         }
         last = results
         checkThresholds(cfgs, results)
+        checkExpiry(cfgs, results)
         pushUpdate()
         notifyOnChange(results)
         AppLog.log(tag, "刷新完成: ${results.size} 个账户, allOk=$allOk")
@@ -122,6 +132,21 @@ class QuotaManager(
         }
     }
 
+    private fun checkExpiry(cfgs: List<AccountConfig>, results: List<QuotaAccount>) {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        results.forEach { acc ->
+            val expiredAt = acc.expiredAt ?: return@forEach
+            val cfg = cfgs.find { it.id == acc.id } ?: return@forEach
+            if (acc.status != "ok") return@forEach
+            val hoursLeft = (expiredAt - System.currentTimeMillis()) / 3_600_000.0
+            if (hoursLeft <= 0 || hoursLeft > expiryRemindHours) return@forEach
+            if (notifiedExpiry[acc.id] == today) return@forEach
+            notifiedExpiry[acc.id] = today
+            AppLog.log(tag, "到期提醒: ${acc.name} 剩余 ${"%.1f".format(hoursLeft)} 小时")
+            onExpiry(cfg, acc, hoursLeft)
+        }
+    }
+
     private fun pushUpdate() {
         if (!channel.isReady()) {
             AppLog.log(tag, "推送 update.quota 跳过（手环未连接）")
@@ -141,5 +166,6 @@ class QuotaManager(
     fun destroy() {
         stop()
         notifiedLow.clear()
+        notifiedExpiry.clear()
     }
 }

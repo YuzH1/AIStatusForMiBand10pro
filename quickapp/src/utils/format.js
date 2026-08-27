@@ -50,5 +50,16 @@ export default {
     if (acc.total) parts.push(`总额 ${fmtNum(acc.total)}${acc.unit || ''}`)
     if (acc.group) parts.push(acc.group)
     return parts.join(' · ')
+  },
+  expiryText(expiredAt, type) {
+    if (!expiredAt) return ''
+    const diff = expiredAt - Date.now()
+    if (diff <= 0) return ''
+    const word = type === 'codex' ? '重置' : '到期'
+    const hours = Math.floor(diff / 3600000)
+    if (hours < 24) return `${hours}小时后${word}`
+    const days = Math.floor(diff / 86400000)
+    if (days > 7) return ''
+    return `${days}天后${word}`
   }
 }

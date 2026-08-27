@@ -19,8 +19,8 @@ android {
         applicationId = "com.ivy.aiquota"
         minSdk = 24
         targetSdk = 34
-        versionCode = 8
-        versionName = "1.0.8"
+        versionCode = 9
+        versionName = "1.0.9"
     }
 
     signingConfigs {

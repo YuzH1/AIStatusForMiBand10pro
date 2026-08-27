@@ -1,8 +1,8 @@
 {
   "package": "com.ivy.aiquota",
   "name": "AI额度",
-  "versionName": "1.0.8",
-  "versionCode": 8,
+  "versionName": "1.0.9",
+  "versionCode": 9,
   "minPlatformVersion": 1200,
   "icon": "/common/logo.png",
   "simulationVersion": "default",
