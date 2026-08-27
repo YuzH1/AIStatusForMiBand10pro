@@ -76,10 +76,10 @@ class Sub2ApiProvider : QuotaProvider {
                     pct(mU, mL)?.let { parts.add("月$it") }
                     if (parts.isNotEmpty()) extra.append(parts.joinToString(" · "))
                     val limit = if (mL > 0) mL else if (wL > 0) wL else if (dL > 0) dL else 0.0
-                    val used = if (mU > 0) mU else if (wU > 0) wU else if (dU > 0) dU else 0.0
+                    val usedV = if (mU > 0) mU else if (wU > 0) wU else if (dU > 0) dU else 0.0
                     if (limit > 0) total = limit
-                    if (remaining < 0) remaining = (limit - used).coerceAtLeast(0.0)
-                    this.used = used
+                    if (remaining < 0) remaining = (limit - usedV).coerceAtLeast(0.0)
+                    used = usedV
                 }
 
                 val quota = r.optJSONObject("quota")
@@ -93,7 +93,7 @@ class Sub2ApiProvider : QuotaProvider {
                         extra.append(if (extra.isEmpty()) p else " · $p")
                     }
                     remaining = if (rem >= 0) rem else (limit - usedV).coerceAtLeast(0.0)
-                    this.used = usedV
+                    used = usedV
                 }
 
                 val rls = r.optJSONArray("rate_limits")
